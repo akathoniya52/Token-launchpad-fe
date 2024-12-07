@@ -1,7 +1,6 @@
 import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
-  MINT_SIZE,
   TOKEN_2022_PROGRAM_ID,
   createMintToInstruction,
   createAssociatedTokenAccountInstruction,
@@ -11,8 +10,6 @@ import {
   TYPE_SIZE,
   LENGTH_SIZE,
   ExtensionType,
-  mintTo,
-  getOrCreateAssociatedTokenAccount,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { createInitializeInstruction, pack } from "@solana/spl-token-metadata";
@@ -20,7 +17,6 @@ import {  useEffect, useState } from "react";
 import { usePreviousTokens } from "../hooks/usePreviousTokens";
 import { Table } from "./Table";
 import { storeTokenLaunch } from "../hooks/storeTokenData";
-// import { usePreviousTokens } from "../hooks/usePreviousTokens";
 
 
 export function TokenLaunchpad() {

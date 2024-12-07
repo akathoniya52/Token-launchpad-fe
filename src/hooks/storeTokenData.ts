@@ -1,6 +1,6 @@
 export async function storeTokenLaunch(associatedTokenAddress:any, mintAddress:any, walletAddress:any, name:string, symbol:string, img:string, supply:any, decimal:string,network:string) {
   try {
-    const response = await fetch('http://localhost:3000/createtokenlaunch', {
+    const response = await fetch('https://token-launchpad-be-3.onrender.com/createtokenlaunch', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

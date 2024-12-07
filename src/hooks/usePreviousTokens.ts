@@ -11,7 +11,7 @@ export function usePreviousTokens(wallet) {
           setLoading(true);
           setError(null); // Reset error state before fetching
           try {
-            const response = await fetch(`http://localhost:3000/tokenslaunch/${wallet?.publicKey}`); // Replace with your API endpoint
+            const response = await fetch(`https://token-launchpad-be-3.onrender.com/tokenslaunch/${wallet?.publicKey}`); // Replace with your API endpoint
             if (!response.ok) {
               throw new Error("Network response was not ok");
             }
