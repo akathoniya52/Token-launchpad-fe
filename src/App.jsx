@@ -13,7 +13,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 function App() {
   return (
     <div style={{width: "100vw"}}>
-      <ConnectionProvider endpoint={process.env.RPC_URL || "https://rpc.ankr.com/solana_devnet"}>
+      <ConnectionProvider endpoint={"https://rpc.gorbchain.xyz"}>
         <WalletProvider wallets={[]} autoConnect>
             <WalletModalProvider>
               <div style={{

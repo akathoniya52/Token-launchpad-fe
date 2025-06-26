@@ -1,4 +1,4 @@
-import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   TOKEN_2022_PROGRAM_ID,
@@ -20,6 +20,15 @@ import { storeTokenLaunch } from "../hooks/storeTokenData";
 
 
 export function TokenLaunchpad() {
+
+  // const httpsConnection = new Connection("https://rpc.gorbchain.xyz")
+  const RPC_ENDPOINT = 'https://rpc.gorbchain.xyz';
+const WS_ENDPOINT = 'wss://rpc.gorbchain.xyz/ws/';
+const httpsConnection = new Connection(RPC_ENDPOINT, {
+  commitment: 'confirmed',
+  wsEndpoint: WS_ENDPOINT,
+  disableRetryOnRateLimit: false,
+});
   const { connection } = useConnection();
   const wallet = useWallet();
 
@@ -43,6 +52,7 @@ export function TokenLaunchpad() {
 
   async function createToken() {
     try {
+
       const name = document.getElementById("name").value;
       const symbol = document.getElementById("symbol").value;
       const supply = document.getElementById("supply").value;
@@ -75,7 +85,7 @@ export function TokenLaunchpad() {
       const mintLen = getMintLen([ExtensionType.MetadataPointer]);
       const metadataLen = TYPE_SIZE + LENGTH_SIZE + pack(metadata).length;
 
-      const lamports = await connection.getMinimumBalanceForRentExemption(
+      const lamports = await httpsConnection.getMinimumBalanceForRentExemption(
         mintLen + metadataLen
       );
 
@@ -113,12 +123,17 @@ export function TokenLaunchpad() {
       );
 
       transaction.feePayer = wallet.publicKey;
-      transaction.recentBlockhash = (
-        await connection.getLatestBlockhash()
-      ).blockhash;
+      const { blockhash } = await httpsConnection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
       transaction.partialSign(mintKeypair);
-
-      await wallet.sendTransaction(transaction, connection);
+      
+      // Sign the transaction with the wallet
+      const signedTx = await wallet.signTransaction(transaction);
+      const txSignature = await httpsConnection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: true,
+      });
+      console.log("Signature: ", txSignature);
+      await httpsConnection.confirmTransaction(txSignature, 'confirmed');
 
       console.log(`Token mint created at ${mintKeypair.publicKey.toBase58()}`);
       const associatedToken = getAssociatedTokenAddressSync(
@@ -140,7 +155,16 @@ export function TokenLaunchpad() {
         )
       );
 
-      await wallet.sendTransaction(transaction2, connection);
+      transaction2.feePayer = wallet.publicKey;
+      const { blockhash: blockhash2 } = await httpsConnection.getLatestBlockhash();
+      transaction2.recentBlockhash = blockhash2;
+      
+      const signedTx2 = await wallet.signTransaction(transaction2);
+      const txSignature2 = await httpsConnection.sendRawTransaction(signedTx2.serialize(), {
+        skipPreflight: true,
+      });
+      console.log("Signature2: ", txSignature2);
+      await httpsConnection.confirmTransaction(txSignature2, 'confirmed');
 
       const transaction3 = new Transaction().add(
         createMintToInstruction(
@@ -153,7 +177,16 @@ export function TokenLaunchpad() {
         )
       );
 
-      await wallet.sendTransaction(transaction3, connection);
+      transaction3.feePayer = wallet.publicKey;
+      const { blockhash: blockhash3 } = await httpsConnection.getLatestBlockhash();
+      transaction3.recentBlockhash = blockhash3;
+      
+      const signedTx3 = await wallet.signTransaction(transaction3);
+      const txSignature3 = await httpsConnection.sendRawTransaction(signedTx3.serialize(), {
+        skipPreflight: true,
+      });
+      console.log("Signature3: ", txSignature3);
+      await httpsConnection.confirmTransaction(txSignature3, 'confirmed');
       
       console.log("Minted!");
       await storeTokenLaunch(associatedToken, mintKeypair.publicKey, wallet.publicKey, name, symbol, img, supply, decimal,network);
