@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction, SystemProgram } from '@solana/web3.js';
+import { createInitializeMintInstruction, TOKEN_PROGRAM_ID, MINT_SIZE, getMinimumBalanceForRentExemptMint } from '@solana/spl-token';
+import * as fs from 'fs';
+
+// Configuration
+const CUSTOM_TOKEN_PROGRAM_ID = new PublicKey('CNMcBcix8AunFCgiNFhWKUrNgcbVqACTkHXLzrM5tR54');
+const RPC_ENDPOINT = 'https://rpc.gorbchain.xyz';
+const WS_ENDPOINT = 'wss://rpc.gorbchain.xyz/ws/';
+const connection = new Connection(RPC_ENDPOINT, {
+    commitment: 'confirmed',
+    wsEndpoint: WS_ENDPOINT,
+    disableRetryOnRateLimit: false,
+});
+
+async function createTokenWithMetadata() {
+    try {
+        // Load the payer keypair (your wallet)
+        const payerKeypair = Keypair.fromSecretKey(
+            new Uint8Array(JSON.parse(fs.readFileSync('/Users/rohansingh/.config/solana/id.json', 'utf8')))
+        );
+        
+        // Create a new mint keypair if it doesn't exist
+        let mintKeypair;
+        try {
+            mintKeypair = Keypair.fromSecretKey(
+                new Uint8Array(JSON.parse(fs.readFileSync('token-mint-keypair.json', 'utf8')))
+            );
+        } catch {
+            mintKeypair = Keypair.generate();
+            fs.writeFileSync('token-mint-keypair.json', JSON.stringify(Array.from(mintKeypair.secretKey)));
+            console.log('Generated new mint keypair');
+        }
+        
+        console.log('Payer:', payerKeypair.publicKey.toString());
+        console.log('Mint:', mintKeypair.publicKey.toString());
+        
+        // Get minimum balance for rent exemption
+        const mintRent = await getMinimumBalanceForRentExemptMint(connection);
+        console.log('Mint rent:', mintRent / 1000000000, 'SOL');
+        
+        // Create transaction
+        const transaction = new Transaction();
+        
+        // Add create account instruction
+        transaction.add(
+            SystemProgram.createAccount({
+                fromPubkey: payerKeypair.publicKey,
+                newAccountPubkey: mintKeypair.publicKey,
+                space: MINT_SIZE,
+                lamports: mintRent,
+                programId: CUSTOM_TOKEN_PROGRAM_ID,
+            })
+        );
+        
+        // Add initialize mint instruction
+        transaction.add(
+            createInitializeMintInstruction(
+                mintKeypair.publicKey,
+                6, // decimals
+                payerKeypair.publicKey, // mint authority
+                payerKeypair.publicKey, // freeze authority
+                CUSTOM_TOKEN_PROGRAM_ID
+            )
+        );
+        
+        // Send transaction
+        console.log('Creating token mint...');
+        const signature = await sendAndConfirmTransaction(
+            connection,
+            transaction,
+            [payerKeypair, mintKeypair],
+            { commitment: 'confirmed' }
+        );
+        
+        console.log('✅ Token created successfully!');
+        console.log('Transaction signature:', signature);
+        console.log('Token mint address:', mintKeypair.publicKey.toString());
+        
+        // Token metadata (you can extend this)
+        const tokenMetadata = {
+            name: "My Custom L2 Token",
+            symbol: "MCL2T",
+            description: "A custom SPL token created on Gorb Chain L2",
+            decimals: 6,
+            mintAddress: mintKeypair.publicKey.toString(),
+            programId: CUSTOM_TOKEN_PROGRAM_ID.toString(),
+            network: "Gorb Chain L2",
+            rpcUrl: RPC_ENDPOINT
+        };
+        
+        // Save metadata to file
+        fs.writeFileSync('token-metadata.json', JSON.stringify(tokenMetadata, null, 2));
+        console.log('📝 Token metadata saved to token-metadata.json');
+        
+    } catch (error) {
+        console.error('❌ Error creating token:', error);
+    }
+}
+
+createTokenWithMetadata();
