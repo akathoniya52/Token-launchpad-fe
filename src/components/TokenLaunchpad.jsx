@@ -24,7 +24,7 @@ export function TokenLaunchpad() {
   // const httpsConnection = new Connection("https://rpc.gorbchain.xyz")
 //   const RPC_ENDPOINT = 'https://rpc.gorbchain.xyz';
 // const WS_ENDPOINT = 'wss://rpc.gorbchain.xyz/ws/';
-const httpsConnection = = new Connection("https://api.devnet.solana.com", "confirmed");
+const httpsConnection = new Connection("https://api.devnet.solana.com", "confirmed");
 
 //   new Connection(RPC_ENDPOINT, {
 //   commitment: 'confirmed',
